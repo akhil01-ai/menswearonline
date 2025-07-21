@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Men's Apparel Store</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light blue-gray */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div id="app-container" class="bg-white shadow-xl rounded-2xl w-full max-w-4xl p-6 md:p-8 lg:p-10 border border-gray-200">
+        <!-- Content will be rendered here by JavaScript -->
+    </div>
+
+    <script>
+        // Global state for the application
+        let cart = []; // Stores items in the shopping cart
+        let currentPage = 'home'; // Initial page view: 'home', 'shop', 'product', 'cart', 'checkout', 'thankyou', 'outfitDetail'
+        let orderDetails = {}; // Stores details after a mock order is placed
+        let selectedProduct = null; // Stores the product currently being viewed on the product detail page
+        let selectedOutfit = null; // Stores the outfit currently being viewed on the outfit detail page
+
+        // --- Product Data ---
+        const allProducts = [
+            {
+                id: 'denim-jacket-001',
+                name: "The Classic Denim Jacket",
+                price: 3999,
+                originalPrice: 4999,
+                image: "https://placehold.co/600x400/a0aec0/ffffff?text=Denim+Jacket",
+                description: "Our timeless denim jacket combines rugged durability with effortless style. Made from 100% premium cotton denim, it features a regular fit, button-front closure, and multiple functional pockets. A versatile essential for every man's wardrobe, perfect for layering.",
+                category: 'Jackets',
+                sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+                colors: ['Blue Wash', 'Black', 'Grey']
+            },
+            {
+                id: 'oxford-shirt-001',
+                name: "Classic Oxford Shirt",
+                price: 1899,
+                originalPrice: 2299,
+                image: "https://placehold.co/600x400/b0c4de/ffffff?text=Oxford+Shirt",
+                description: "A crisp, comfortable Oxford shirt, perfect for both casual and semi-formal occasions. Crafted from breathable cotton for all-day comfort. Available in multiple classic colors.",
+                category: 'Shirts',
+                sizes: ['S', 'M', 'L', 'XL'],
+                colors: ['White', 'Light Blue', 'Pink']
+            },
+            {
+                id: 'slim-fit-chino-001',
+                name: "Slim Fit Chino Pants",
+                price: 2499,
+                image: "https://placehold.co/600x400/87ceeb/ffffff?text=Chino+Pants",
+                description: "Modern slim-fit chinos offering comfort and style. Made with a stretch cotton blend, these pants are versatile for everyday wear or a smart-casual look.",
+                category: 'Pants',
+                sizes: ['28', '30', '32', '34', '36'],
+                colors: ['Khaki', 'Navy', 'Olive']
+            },
+            {
+                id: 'leather-belt-001',
+                name: "Premium Leather Belt",
+                price: 999,
+                image: "https://placehold.co/600x400/d2b48c/ffffff?text=Leather+Belt",
+                description: "A durable and stylish genuine leather belt with a classic buckle. The perfect accessory to complete any outfit.",
+                category: 'Accessories',
+                sizes: ['S', 'M', 'L', 'XL'], // Sizes for belts often relate to waist size
+                colors: ['Brown', 'Black']
+            },
+            {
+                id: 'graphic-tee-001',
+                name: "Urban Graphic Tee",
+                price: 899,
+                image: "https://placehold.co/600x400/c0c0c0/ffffff?text=Graphic+Tee",
+                description: "Soft cotton graphic tee with a unique urban design. Ideal for a relaxed, casual look.",
+                category: 'Shirts',
+                sizes: ['S', 'M', 'L', 'XL'],
+                colors: ['White', 'Black', 'Grey']
+            },
+            {
+                id: 'cargo-shorts-001',
+                name: "Comfort Cargo Shorts",
+                price: 1599,
+                image: "https://placehold.co/600x400/98fb98/ffffff?text=Cargo+Shorts",
+                description: "Relaxed fit cargo shorts with ample pocket space, perfect for outdoor activities or casual summer days.",
+                category: 'Pants',
+                sizes: ['28', '30', '32', '34', '36'],
+                colors: ['Green', 'Beige']
+            },
+            {
+                id: 'baseball-cap-001',
+                name: "Classic Baseball Cap",
+                price: 699,
+                image: "https://placehold.co/600x400/87cefa/ffffff?text=Baseball+Cap",
+                description: "Adjustable classic baseball cap for everyday style and sun protection.",
+                category: 'Accessories',
+                sizes: ['One Size'],
+                colors: ['Navy', 'Black', 'Red']
+            }
+        ];
+
+        // --- Outfit Collections Data ---
+        const outfitCollections = [
+            {
+                id: 'urban-explorer',
+                name: "Urban Explorer",
+                description: "A rugged yet stylish look for city adventures.",
+                image: "https://placehold.co/600x400/6a5acd/ffffff?text=Urban+Explorer",
+                items: [
+                    { productId: 'denim-jacket-001', selectedSize: 'L', selectedColor: 'Blue Wash' },
+                    { productId: 'graphic-tee-001', selectedSize: 'L', selectedColor: 'Black' },
+                    { productId: 'slim-fit-chino-001', selectedSize: '32', selectedColor: 'Khaki' }
+                ]
+            },
+            {
+                id: 'smart-casual',
+                name: "Smart Casual Essential",
+                description: "Effortless elegance for semi-formal gatherings.",
+                image: "https://placehold.co/600x400/4682b4/ffffff?text=Smart+Casual",
+                items: [
+                    { productId: 'oxford-shirt-001', selectedSize: 'M', selectedColor: 'Light Blue' },
+                    { productId: 'slim-fit-chino-001', selectedSize: '30', selectedColor: 'Navy' },
+                    { productId: 'leather-belt-001', selectedSize: 'M', selectedColor: 'Brown' }
+                ]
+            }
+        ];
+
+        /**
+         * Renders the navigation bar.
+         */
+        function renderNavBar() {
+            return `
+                <nav class="w-full max-w-4xl bg-indigo-700 rounded-xl shadow-lg mb-6 p-4 flex justify-between items-center">
+                    <div class="text-white text-2xl font-bold">Men's Apparel</div>
+                    <div class="flex space-x-6">
+                        <button class="nav-button text-white hover:text-indigo-200 transition duration-200" data-page="home">Home</button>
+                        <button class="nav-button text-white hover:text-indigo-200 transition duration-200" data-page="shop">Shop</button>
+                        <button class="nav-button text-white hover:text-indigo-200 transition duration-200" data-page="cart">Cart (${cart.length})</button>
+                    </div>
+                </nav>
+            `;
+        }
+
+        /**
+         * Renders the home page.
+         */
+        function renderHomePage() {
+            const appContainer = document.getElementById('app-container');
+            appContainer.innerHTML = `
+                ${renderNavBar()}
+                <div class="text-center py-16 px-4">
+                    <h1 class="text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+                        Style Redefined for the Modern Man
+                    </h1>
+                    <p class="text-xl text-gray-700 mb-10 max-w-2xl mx-auto">
+                        Discover our exclusive collection of premium men's clothing, crafted for comfort, durability, and timeless elegance.
+                    </p>
+                    <button id="shop-now-button" class="bg-indigo-600 text-white text-xl font-bold py-4 px-12 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                        Shop Now
+                    </button>
+
+                    <div class="mt-20">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-8">Shop by Category</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            ${[...new Set(allProducts.map(p => p.category))].map(category => `
+                                <button class="category-card block bg-gray-100 p-6 rounded-xl shadow-md hover:shadow-lg transition duration-300 transform hover:-translate-y-1" data-category="${category}">
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-2">${category}</h3>
+                                    <p class="text-gray-600 text-sm">${allProducts.filter(p => p.category === category).length} items</p>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="mt-20">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-8">Curated Outfit Collections</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            ${outfitCollections.map(outfit => `
+                                <button class="outfit-card block bg-gray-100 rounded-xl shadow-md hover:shadow-lg transition duration-300 transform hover:-translate-y-1" data-outfit-id="${outfit.id}">
+                                    <img src="${outfit.image}" alt="${outfit.name}" class="w-full h-48 object-cover rounded-t-xl">
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-semibold text-gray-800 mb-2">${outfit.name}</h3>
+                                        <p class="text-gray-600 text-sm">${outfit.description}</p>
+                                    </div>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('shop-now-button').addEventListener('click', () => {
+                updateView('shop');
+            });
+            document.querySelectorAll('.category-card').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    updateView('shop', { category: event.currentTarget.dataset.category });
+                });
+            });
+            document.querySelectorAll('.outfit-card').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const outfitId = event.currentTarget.dataset.outfitId;
+                    selectedOutfit = outfitCollections.find(o => o.id === outfitId);
+                    updateView('outfitDetail');
+                });
+            });
+            attachNavListeners();
+        }
+
+        /**
+         * Renders the main shop page displaying all products or filtered by category.
+         * @param {string} [filterCategory] - Optional category to filter products by.
+         */
+        function renderShopPage(filterCategory = null) {
+            const appContainer = document.getElementById('app-container');
+            const productsToDisplay = filterCategory
+                ? allProducts.filter(p => p.category === filterCategory)
+                : allProducts;
+
+            appContainer.innerHTML = `
+                ${renderNavBar()}
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">
+                    ${filterCategory ? `${filterCategory} Collection` : 'All Products'}
+                </h2>
+
+                <div class="flex flex-wrap justify-center gap-6 mb-10">
+                    <button class="category-filter-button px-6 py-3 rounded-xl border-2 ${!filterCategory ? 'border-indigo-600 bg-indigo-50 text-indigo-800 font-semibold' : 'border-gray-300 text-gray-700 hover:border-indigo-400 hover:bg-gray-50'}" data-category="all">All</button>
+                    ${[...new Set(allProducts.map(p => p.category))].map(category => `
+                        <button class="category-filter-button px-6 py-3 rounded-xl border-2 ${filterCategory === category ? 'border-indigo-600 bg-indigo-50 text-indigo-800 font-semibold' : 'border-gray-300 text-gray-700 hover:border-indigo-400 hover:bg-gray-50'}" data-category="${category}">
+                            ${category}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    ${productsToDisplay.map(p => `
+                        <div class="product-card bg-gray-50 rounded-xl shadow-md hover:shadow-lg transition duration-300 transform hover:-translate-y-1 cursor-pointer" data-product-id="${p.id}">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-48 object-cover rounded-t-xl border-b border-gray-200">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-900 truncate">${p.name}</h3>
+                                <p class="text-indigo-700 font-bold text-xl mt-2">₹${p.price.toLocaleString('en-IN')}</p>
+                                ${p.originalPrice ? `<p class="text-sm text-gray-500 line-through">₹${p.originalPrice.toLocaleString('en-IN')}</p>` : ''}
+                                <button class="add-to-cart-from-shop mt-4 w-full bg-indigo-600 text-white text-md font-semibold py-2 rounded-lg hover:bg-indigo-700 transition duration-200" data-product-id="${p.id}">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', (event) => {
+                    // Ensure clicking the button doesn't trigger card click
+                    if (!event.target.closest('.add-to-cart-from-shop')) {
+                        const productId = event.currentTarget.dataset.productId;
+                        selectedProduct = allProducts.find(p => p.id === productId);
+                        // Reset quantity to 1 for new product view
+                        if (selectedProduct) selectedProduct.quantity = 1;
+                        updateView('product');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.add-to-cart-from-shop').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const productId = event.currentTarget.dataset.productId;
+                    const productToAdd = { ...allProducts.find(p => p.id === productId) }; // Clone product
+                    if (productToAdd) {
+                        // For simplicity, when adding from shop, default to first size/color if available
+                        productToAdd.selectedSize = productToAdd.sizes ? productToAdd.sizes[0] : 'One Size';
+                        productToAdd.selectedColor = productToAdd.colors ? productToAdd.colors[0] : null;
+                        productToAdd.quantity = 1; // Always add 1 from shop page
+
+                        const itemInCartIndex = cart.findIndex(item =>
+                            item.id === productToAdd.id &&
+                            item.selectedSize === productToAdd.selectedSize &&
+                            item.selectedColor === productToAdd.selectedColor
+                        );
+
+                        if (itemInCartIndex > -1) {
+                            cart[itemInCartIndex].quantity++;
+                        } else {
+                            cart.push(productToAdd);
+                        }
+                        updateView('cart'); // Go to cart page after adding
+                    }
+                });
+            });
+
+            document.querySelectorAll('.category-filter-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const category = event.currentTarget.dataset.category;
+                    if (category === 'all') {
+                        updateView('shop');
+                    } else {
+                        updateView('shop', { category: category });
+                    }
+                });
+            });
+            attachNavListeners();
+        }
+
+        /**
+         * Renders the product detail page for a specific product.
+         */
+        function renderProductPage() {
+            if (!selectedProduct) {
+                updateView('shop'); // Redirect to shop if no product is selected
+                return;
+            }
+
+            const appContainer = document.getElementById('app-container');
+            // Ensure selectedProduct has a quantity property for display/update
+            if (typeof selectedProduct.quantity === 'undefined') {
+                selectedProduct.quantity = 1;
+            }
+            if (typeof selectedProduct.selectedSize === 'undefined' && selectedProduct.sizes && selectedProduct.sizes.length > 0) {
+                selectedProduct.selectedSize = selectedProduct.sizes[0];
+            }
+            if (typeof selectedProduct.selectedColor === 'undefined' && selectedProduct.colors && selectedProduct.colors.length > 0) {
+                selectedProduct.selectedColor = selectedProduct.colors[0];
+            }
+
+
+            appContainer.innerHTML = `
+                ${renderNavBar()}
+                <div class="flex flex-col md:flex-row gap-8">
+                    <!-- Product Image Section -->
+                    <div class="md:w-1/2 flex justify-center items-center bg-gray-100 rounded-xl p-4">
+                        <img src="${selectedProduct.image}" alt="${selectedProduct.name}" class="rounded-lg max-h-96 object-contain shadow-md">
+                    </div>
+
+                    <!-- Product Details Section -->
+                    <div class="md:w-1/2 flex flex-col justify-between">
+                        <div>
+                            <h1 class="text-4xl font-extrabold text-gray-900 mb-3">${selectedProduct.name}</h1>
+                            <div class="flex items-baseline mb-4">
+                                <span class="text-4xl font-bold text-indigo-700">₹${selectedProduct.price.toLocaleString('en-IN')}</span>
+                                ${selectedProduct.originalPrice ? `<span class="text-lg text-gray-500 line-through ml-3">₹${selectedProduct.originalPrice.toLocaleString('en-IN')}</span>` : ''}
+                            </div>
+                            <div class="flex items-center text-yellow-500 mb-5">
+                                <span class="text-xl">★★★★★</span>
+                                <span class="text-gray-600 ml-2">(150 Reviews)</span>
+                            </div>
+                            <p class="text-gray-700 leading-relaxed mb-6">${selectedProduct.description}</p>
+
+                            <!-- Size Selector -->
+                            ${selectedProduct.sizes && selectedProduct.sizes.length > 0 ? `
+                            <div class="mb-6">
+                                <label class="block text-lg font-semibold text-gray-800 mb-2">Select Size:</label>
+                                <div class="flex flex-wrap gap-3">
+                                    ${selectedProduct.sizes.map(size => `
+                                        <button class="size-button px-5 py-3 rounded-xl border-2 ${selectedProduct.selectedSize === size ? 'border-indigo-600 bg-indigo-50 text-indigo-800 font-semibold' : 'border-gray-300 text-gray-700 hover:border-indigo-400 hover:bg-gray-50'}"
+                                                data-size="${size}">
+                                            ${size}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                                <a href="#" class="text-indigo-600 hover:underline text-sm mt-2 block">Size Guide</a>
+                            </div>
+                            ` : ''}
+
+                            <!-- Color Selector -->
+                            ${selectedProduct.colors && selectedProduct.colors.length > 0 ? `
+                            <div class="mb-6">
+                                <label class="block text-lg font-semibold text-gray-800 mb-2">Select Color:</label>
+                                <div class="flex flex-wrap gap-3">
+                                    ${selectedProduct.colors.map(color => `
+                                        <button class="color-button px-5 py-3 rounded-xl border-2 ${selectedProduct.selectedColor === color ? 'border-indigo-600 bg-indigo-50 text-indigo-800 font-semibold' : 'border-gray-300 text-gray-700 hover:border-indigo-400 hover:bg-gray-50'}"
+                                                data-color="${color}">
+                                            ${color}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <!-- Quantity Selector -->
+                            <div class="mb-8">
+                                <label for="quantity-input" class="block text-lg font-semibold text-gray-800 mb-2">Quantity:</label>
+                                <div class="flex items-center border border-gray-300 rounded-xl w-32">
+                                    <button id="decrease-quantity" class="px-4 py-2 text-gray-700 text-2xl font-bold rounded-l-xl hover:bg-gray-100">-</button>
+                                    <input type="number" id="quantity-input" value="${selectedProduct.quantity}" min="1" class="w-12 text-center border-x border-gray-300 text-gray-800 text-lg font-medium focus:outline-none focus:ring-0" readonly>
+                                    <button id="increase-quantity" class="px-4 py-2 text-gray-700 text-2xl font-bold rounded-r-xl hover:bg-gray-100">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                            <button id="add-to-cart-button" class="flex-1 bg-indigo-600 text-white text-xl font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                                Add to Cart
+                            </button>
+                            <button id="back-to-shop-button" class="flex-1 bg-gray-200 text-gray-800 text-xl font-bold py-4 rounded-xl shadow-md hover:bg-gray-300 transition duration-300 ease-in-out transform hover:scale-105">
+                                Back to Shop
+                            </button>
+                        </div>
+
+                        <!-- Trust Badges -->
+                        <div class="mt-8 text-center text-gray-600 text-sm">
+                            <p class="mb-2">📦 Free Shipping on all orders over ₹2,000!</p>
+                            <p>↩️ Easy 30-Day Returns.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add event listeners for size selection
+            document.querySelectorAll('.size-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    selectedProduct.selectedSize = event.target.dataset.size;
+                    renderProductPage(); // Re-render to update active size button
+                });
+            });
+
+            // Add event listeners for color selection
+            document.querySelectorAll('.color-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    selectedProduct.selectedColor = event.target.dataset.color;
+                    renderProductPage(); // Re-render to update active color button
+                });
+            });
+
+            // Add event listeners for quantity
+            document.getElementById('decrease-quantity').addEventListener('click', () => {
+                if (selectedProduct.quantity > 1) {
+                    selectedProduct.quantity--;
+                    document.getElementById('quantity-input').value = selectedProduct.quantity;
+                }
+            });
+            document.getElementById('increase-quantity').addEventListener('click', () => {
+                selectedProduct.quantity++;
+                document.getElementById('quantity-input').value = selectedProduct.quantity;
+            });
+
+            // Add to Cart button logic
+            document.getElementById('add-to-cart-button').addEventListener('click', () => {
+                const itemInCartIndex = cart.findIndex(item =>
+                    item.id === selectedProduct.id &&
+                    item.selectedSize === selectedProduct.selectedSize &&
+                    item.selectedColor === selectedProduct.selectedColor
+                );
+
+                if (itemInCartIndex > -1) {
+                    cart[itemInCartIndex].quantity += selectedProduct.quantity;
+                } else {
+                    cart.push({ ...selectedProduct }); // Push a copy of the product object
+                }
+                // Reset selectedProduct quantity to 1 for next view
+                selectedProduct.quantity = 1;
+                updateView('cart'); // Go to cart page after adding
+            });
+
+            // Back to Shop button logic
+            document.getElementById('back-to-shop-button').addEventListener('click', () => {
+                updateView('shop');
+            });
+            attachNavListeners();
+        }
+
+        /**
+         * Renders the outfit detail page.
+         */
+        function renderOutfitDetailPage() {
+            if (!selectedOutfit) {
+                updateView('home'); // Redirect to home if no outfit is selected
+                return;
+            }
+
+            const appContainer = document.getElementById('app-container');
+            let outfitTotalPrice = 0;
+
+            const outfitItemsHtml = selectedOutfit.items.map(outfitItem => {
+                const product = allProducts.find(p => p.id === outfitItem.productId);
+                if (!product) return ''; // Should not happen with correct data
+
+                const itemPrice = product.price;
+                outfitTotalPrice += itemPrice;
+
+                return `
+                    <div class="flex items-center border border-gray-200 rounded-xl p-4 shadow-sm">
+                        <img src="${product.image}" alt="${product.name}" class="w-20 h-20 object-cover rounded-lg mr-4 border border-gray-100">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900">${product.name}</h3>
+                            <p class="text-gray-600 text-sm">Size: ${outfitItem.selectedSize || 'N/A'}${outfitItem.selectedColor ? `, Color: ${outfitItem.selectedColor}` : ''}</p>
+                            <p class="text-indigo-700 font-bold text-md">₹${itemPrice.toLocaleString('en-IN')}</p>
+                        </div>
+                        <button class="view-product-from-outfit px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm" data-product-id="${product.id}">
+                            View Product
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+
+            appContainer.innerHTML = `
+                ${renderNavBar()}
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">${selectedOutfit.name}</h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Outfit Image & Description -->
+                    <div class="lg:w-1/2 bg-gray-100 rounded-xl p-4 flex flex-col items-center shadow-md">
+                        <img src="${selectedOutfit.image}" alt="${selectedOutfit.name}" class="w-full max-h-96 object-contain rounded-lg mb-6 shadow-md">
+                        <p class="text-gray-700 leading-relaxed text-center">${selectedOutfit.description}</p>
+                    </div>
+
+                    <!-- Outfit Items & Add to Cart -->
+                    <div class="lg:w-1/2 flex flex-col">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Items in this Outfit:</h3>
+                        <div class="space-y-4 mb-6">
+                            ${outfitItemsHtml}
+                        </div>
+                        <div class="flex justify-between items-center text-2xl font-bold text-gray-900 border-t border-gray-200 pt-4 mt-auto">
+                            <span>Outfit Total:</span>
+                            <span class="ml-4 text-indigo-700">₹${outfitTotalPrice.toLocaleString('en-IN')}</span>
+                        </div>
+                        <button id="add-outfit-to-cart-button" class="mt-6 w-full bg-indigo-600 text-white text-xl font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                            Add Entire Outfit to Cart
+                        </button>
+                        <button id="back-to-home-from-outfit" class="mt-4 w-full bg-gray-200 text-gray-800 text-xl font-bold py-4 rounded-xl shadow-md hover:bg-gray-300 transition duration-300 ease-in-out transform hover:scale-105">
+                            Back to Home
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('add-outfit-to-cart-button').addEventListener('click', () => {
+                selectedOutfit.items.forEach(outfitItem => {
+                    const productToAdd = { ...allProducts.find(p => p.id === outfitItem.productId) };
+                    if (productToAdd) {
+                        productToAdd.selectedSize = outfitItem.selectedSize || (productToAdd.sizes ? productToAdd.sizes[0] : 'One Size');
+                        productToAdd.selectedColor = outfitItem.selectedColor || (productToAdd.colors ? productToAdd.colors[0] : null);
+                        productToAdd.quantity = 1; // Add one of each item in the outfit
+
+                        const itemInCartIndex = cart.findIndex(item =>
+                            item.id === productToAdd.id &&
+                            item.selectedSize === productToAdd.selectedSize &&
+                            item.selectedColor === productToAdd.selectedColor
+                        );
+
+                        if (itemInCartIndex > -1) {
+                            cart[itemInCartIndex].quantity++;
+                        } else {
+                            cart.push(productToAdd);
+                        }
+                    }
+                });
+                updateView('cart');
+            });
+
+            document.getElementById('back-to-home-from-outfit').addEventListener('click', () => {
+                updateView('home');
+            });
+
+            document.querySelectorAll('.view-product-from-outfit').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const productId = event.currentTarget.dataset.productId;
+                    selectedProduct = allProducts.find(p => p.id === productId);
+                    if (selectedProduct) {
+                        // Set default quantity for product detail view
+                        selectedProduct.quantity = 1;
+                        // Set default size/color if not specified in outfit
+                        if (selectedProduct.sizes && selectedProduct.sizes.length > 0 && !selectedProduct.selectedSize) {
+                            selectedProduct.selectedSize = selectedProduct.sizes[0];
+                        }
+                        if (selectedProduct.colors && selectedProduct.colors.length > 0 && !selectedProduct.selectedColor) {
+                            selectedProduct.selectedColor = selectedProduct.colors[0];
+                        }
+                    }
+                    updateView('product');
+                });
+            });
+            attachNavListeners();
+        }
+
+
+        /**
+         * Renders the shopping cart page.
+         */
+        function renderCartPage() {
+            const appContainer = document.getElementById('app-container');
+            let cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            appContainer.innerHTML = `
+                ${renderNavBar()}
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">Your Shopping Cart</h2>
+
+                ${cart.length === 0 ? `
+                    <div class="text-center text-gray-600 text-xl py-10">
+                        Your cart is empty. <br>
+                        <button id="back-to-shop-button" class="mt-6 bg-indigo-600 text-white text-lg font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                            Continue Shopping
+                        </button>
+                    </div>
+                ` : `
+                    <div class="space-y-6 mb-8">
+                        ${cart.map((item, index) => `
+                            <div class="flex items-center border border-gray-200 rounded-xl p-4 shadow-sm">
+                                <img src="${item.image}" alt="${item.name}" class="w-24 h-24 object-cover rounded-lg mr-4 border border-gray-100">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold text-gray-900">${item.name}</h3>
+                                    <p class="text-gray-600 text-sm">Size: ${item.selectedSize || 'N/A'}${item.selectedColor ? `, Color: ${item.selectedColor}` : ''}</p>
+                                    <p class="text-indigo-700 font-bold text-lg">₹${item.price.toLocaleString('en-IN')}</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <button class="decrease-cart-quantity px-3 py-1 text-gray-700 text-xl font-bold rounded-l-md hover:bg-gray-100" data-index="${index}">-</button>
+                                    <input type="number" value="${item.quantity}" min="1" class="w-12 text-center border-y border-gray-300 text-gray-800 text-base font-medium focus:outline-none focus:ring-0" readonly>
+                                    <button class="increase-cart-quantity px-3 py-1 text-gray-700 text-xl font-bold rounded-r-md hover:bg-gray-100" data-index="${index}">+</button>
+                                </div>
+                                <button class="remove-from-cart ml-6 text-red-500 hover:text-red-700 transition duration-200" data-index="${index}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="flex justify-end items-center text-2xl font-bold text-gray-900 mb-8">
+                        Subtotal: <span class="ml-4 text-indigo-700">₹${cartTotal.toLocaleString('en-IN')}</span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 justify-between">
+                        <button id="continue-shopping-button" class="flex-1 bg-gray-200 text-gray-800 text-lg font-bold py-3 rounded-xl shadow-md hover:bg-gray-300 transition duration-300 ease-in-out transform hover:scale-105">
+                            Continue Shopping
+                        </button>
+                        <button id="proceed-to-checkout-button" class="flex-1 bg-indigo-600 text-white text-lg font-bold py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                            Proceed to Checkout
+                        </button>
+                    </div>
+                `}
+            `;
+
+            // Event listeners for cart actions
+            document.querySelectorAll('.decrease-cart-quantity').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    if (cart[index].quantity > 1) {
+                        cart[index].quantity--;
+                        renderCartPage(); // Re-render cart to update quantity and total
+                    }
+                });
+            });
+
+            document.querySelectorAll('.increase-cart-quantity').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    cart[index].quantity++;
+                    renderCartPage(); // Re-render cart to update quantity and total
+                });
+            });
+
+            document.querySelectorAll('.remove-from-cart').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    cart.splice(index, 1); // Remove item from cart array
+                    renderCartPage(); // Re-render cart
+                });
+            });
+
+            // Navigation buttons
+            document.getElementById('continue-shopping-button')?.addEventListener('click', () => {
+                updateView('shop'); // Changed to 'shop' page
+            });
+            document.getElementById('back-to-shop-button')?.addEventListener('click', () => {
+                updateView('shop'); // Changed to 'shop' page
+            });
+            document.getElementById('proceed-to-checkout-button')?.addEventListener('click', () => {
+                updateView('checkout');
+            });
+            attachNavListeners();
+        }
+
+        /**
+         * Renders the checkout page.
+         */
+        function renderCheckoutPage() {
+            const appContainer = document.getElementById('app-container');
+            let cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            let shippingCost = cartTotal > 2000 ? 0 : 150; // Example: Free shipping over ₹2000
+            let grandTotal = cartTotal + shippingCost;
+
+            appContainer.innerHTML = `
+                ${renderNavBar()}
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">Checkout</h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Shipping Information -->
+                    <div class="lg:w-2/3 bg-gray-50 p-6 rounded-xl shadow-md border border-gray-100">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Shipping Information</h3>
+                        <form id="checkout-form" class="space-y-5">
+                            <div>
+                                <label for="fullName" class="block text-gray-700 font-medium mb-2">Full Name</label>
+                                <input type="text" id="fullName" name="fullName" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="email" class="block text-gray-700 font-medium mb-2">Email Address</label>
+                                <input type="email" id="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-gray-700 font-medium mb-2">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="address" class="block text-gray-700 font-medium mb-2">Street Address</label>
+                                <input type="text" id="address" name="address" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div>
+                                    <label for="city" class="block text-gray-700 font-medium mb-2">City</label>
+                                    <input type="text" id="city" name="city" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                                <div>
+                                    <label for="state" class="block text-gray-700 font-medium mb-2">State</label>
+                                    <input type="text" id="state" name="state" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                                <div>
+                                    <label for="zip" class="block text-gray-700 font-medium mb-2">Pin Code</label>
+                                    <input type="text" id="zip" name="zip" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                            </div>
+
+                            <h3 class="text-2xl font-bold text-gray-800 mt-10 mb-6">Payment Method</h3>
+                            <div class="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-xl mb-6">
+                                <p class="font-semibold">Note:</p>
+                                <p class="text-sm">This is a demo. No actual payment processing will occur. Your order will be placed upon clicking "Place Order".</p>
+                            </div>
+                            <div class="flex items-center mb-4">
+                                <input type="radio" id="cod" name="paymentMethod" value="Cash on Delivery" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300" checked>
+                                <label for="cod" class="ml-2 block text-gray-700">Cash on Delivery</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="card-demo" name="paymentMethod" value="Credit/Debit Card (Demo)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                                <label for="card-demo" class="ml-2 block text-gray-700">Credit/Debit Card (Demo)</label>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                                <button type="button" id="back-to-cart-button" class="flex-1 bg-gray-200 text-gray-800 text-lg font-bold py-3 rounded-xl shadow-md hover:bg-gray-300 transition duration-300 ease-in-out transform hover:scale-105">
+                                    Back to Cart
+                                </button>
+                                <button type="submit" class="flex-1 bg-indigo-600 text-white text-lg font-bold py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                                    Place Order
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="lg:w-1/3 bg-white p-6 rounded-xl shadow-md border border-gray-200 h-fit">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Order Summary</h3>
+                        <div class="space-y-4 mb-6">
+                            ${cart.map(item => `
+                                <div class="flex justify-between items-center text-gray-700">
+                                    <span>${item.name} (x${item.quantity})</span>
+                                    <span>₹${(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="border-t border-gray-200 pt-4 space-y-3">
+                            <div class="flex justify-between text-gray-700">
+                                <span>Subtotal:</span>
+                                <span>₹${cartTotal.toLocaleString('en-IN')}</span>
+                            </div>
+                            <div class="flex justify-between text-gray-700">
+                                <span>Shipping:</span>
+                                <span>${shippingCost === 0 ? 'Free' : `₹${shippingCost.toLocaleString('en-IN')}`}</span>
+                            </div>
+                            <div class="flex justify-between text-2xl font-bold text-gray-900 pt-2">
+                                <span>Grand Total:</span>
+                                <span class="text-indigo-700">₹${grandTotal.toLocaleString('en-IN')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Back to Cart button
+            document.getElementById('back-to-cart-button').addEventListener('click', () => {
+                updateView('cart');
+            });
+
+            // Handle form submission
+            document.getElementById('checkout-form').addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent default form submission
+
+                // Basic validation
+                const form = event.target;
+                if (!form.checkValidity()) {
+                    // If form is invalid, the browser will show validation messages
+                    form.reportValidity();
+                    return;
+                }
+
+                // Get selected payment method
+                const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+                // Collect form data for orderDetails
+                orderDetails = {
+                    orderNumber: 'ORD' + Math.floor(Math.random() * 1000000), // Mock order number
+                    totalPaid: grandTotal,
+                    items: cart.map(item => ({
+                        name: item.name,
+                        size: item.selectedSize,
+                        quantity: item.quantity,
+                        price: item.price
+                    })),
+                    shippingAddress: {
+                        fullName: form.fullName.value,
+                        email: form.email.value,
+                        phone: form.phone.value,
+                        address: form.address.value,
+                        city: form.city.value,
+                        state: form.state.value,
+                        zip: form.zip.value,
+                    },
+                    paymentMethod: selectedPaymentMethod, // Use selected payment method
+                    orderDate: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+                };
+
+                // Clear cart after successful order
+                cart = [];
+                updateView('thankyou');
+            });
+            attachNavListeners();
+        }
+
+        /**
+         * Renders the thank you page.
+         */
+        function renderThankYouPage() {
+            const appContainer = document.getElementById('app-container');
+            appContainer.innerHTML = `
+                ${renderNavBar()}
+                <div class="text-center py-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-green-500 mx-auto mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2 class="text-4xl font-extrabold text-gray-900 mb-4">Thank You for Your Order!</h2>
+                    <p class="text-xl text-gray-700 mb-8">Your order <span class="font-bold text-indigo-600">#${orderDetails.orderNumber}</span> has been placed successfully.</p>
+
+                    <div class="bg-gray-50 p-6 rounded-xl shadow-md border border-gray-100 max-w-2xl mx-auto text-left mb-10">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Order Details</h3>
+                        <div class="space-y-2 text-gray-700">
+                            <p><strong>Order Date:</strong> ${orderDetails.orderDate}</p>
+                            <p><strong>Total Paid:</strong> <span class="font-bold text-indigo-700">₹${orderDetails.totalPaid.toLocaleString('en-IN')}</span></p>
+                            <p><strong>Payment Method:</strong> ${orderDetails.paymentMethod}</p>
+                            <p><strong>Shipping To:</strong> ${orderDetails.shippingAddress.fullName}, ${orderDetails.shippingAddress.address}, ${orderDetails.shippingAddress.city}, ${orderDetails.shippingAddress.state}, ${orderDetails.shippingAddress.zip}</p>
+                            <p><strong>Email:</strong> ${orderDetails.shippingAddress.email}</p>
+                            <p><strong>Phone:</strong> ${orderDetails.shippingAddress.phone}</p>
+                        </div>
+
+                        <h4 class="text-xl font-bold text-gray-800 mt-6 mb-3">Items Ordered:</h4>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            ${orderDetails.items.map(item => `
+                                <li>${item.name} (Size: ${item.size}) x${item.quantity} - ₹${(item.price * item.quantity).toLocaleString('en-IN')}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+
+                    <p class="text-gray-600 mb-6">A confirmation email with tracking information will be sent to ${orderDetails.shippingAddress.email} shortly.</p>
+
+                    <button id="continue-shopping-thankyou" class="bg-indigo-600 text-white text-lg font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                        Continue Shopping
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('continue-shopping-thankyou').addEventListener('click', () => {
+                updateView('shop'); // Changed to 'shop' page
+            });
+            attachNavListeners();
+        }
+
+        /**
+         * Attaches event listeners to navigation buttons.
+         */
+        function attachNavListeners() {
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    updateView(event.target.dataset.page);
+                });
+            });
+        }
+
+        /**
+         * Updates the view based on the current page state.
+         * @param {string} viewName - The name of the view to render ('home', 'shop', 'product', 'cart', 'checkout', 'thankyou', 'outfitDetail').
+         * @param {object} [params] - Optional parameters for the view (e.g., { category: 'Jackets' }).
+         */
+        function updateView(viewName, params = {}) {
+            currentPage = viewName;
+            switch (currentPage) {
+                case 'home':
+                    renderHomePage();
+                    break;
+                case 'shop':
+                    renderShopPage(params.category);
+                    break;
+                case 'product':
+                    renderProductPage();
+                    break;
+                case 'outfitDetail':
+                    renderOutfitDetailPage();
+                    break;
+                case 'cart':
+                    renderCartPage();
+                    break;
+                case 'checkout':
+                    // Only allow checkout if cart is not empty
+                    if (cart.length > 0) {
+                        renderCheckoutPage();
+                    } else {
+                        // Using a simple message box instead of alert()
+                        const appContainer = document.getElementById('app-container');
+                        appContainer.innerHTML = `
+                            ${renderNavBar()}
+                            <div class="text-center py-10">
+                                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative max-w-sm mx-auto mb-6" role="alert">
+                                    <strong class="font-bold">Oops!</strong>
+                                    <span class="block sm:inline">Your cart is empty. Please add items before checking out.</span>
+                                </div>
+                                <button id="back-to-shop-from-empty-cart" class="mt-6 bg-indigo-600 text-white text-lg font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                                    Continue Shopping
+                                </button>
+                            </div>
+                        `;
+                        document.getElementById('back-to-shop-from-empty-cart').addEventListener('click', () => {
+                            updateView('shop');
+                        });
+                        attachNavListeners();
+                    }
+                    break;
+                case 'thankyou':
+                    renderThankYouPage();
+                    break;
+                default:
+                    renderHomePage(); // Default to home page
+            }
+        }
+
+        // Initial render when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            updateView('home');
+        });
+    </script>
+</body>
+</html>
